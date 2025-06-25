@@ -1,6 +1,8 @@
 /* app/globals.css */
 @import "tailwindcss";
-@plugin "daisyui";
+@plugin "daisyui" {
+  themes: [ "jobifyTheme"];
+}
 
 /* Add Google Fonts - Inter for a clean modern look */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
@@ -13,7 +15,6 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;
-  color: #333;
 }
 
 a {
@@ -27,4 +28,18 @@ a {
 
 body {
   min-height: 100vh;
+}
+
+@plugin "daisyui/theme" {
+  name: "jobifyTheme";
+  --color-primary: #6666ff;
+  --color-secondary: #f000b8;
+  --color-accent: #37cdbe;
+  --color-base-100: #2e2e2e;
+  --color-base-200: #232323;
+  --color-error: #e22e2e;
+}
+
+[data-theme="jobifyTheme"] .btn {
+  border-width: 0px;
 }

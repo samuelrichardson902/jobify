@@ -81,17 +81,8 @@ export const SupabaseAuthProvider = ({ children }) => {
     <SupabaseAuthContext.Provider value={value}>
       {loading ? (
         // Show a loading indicator while auth is being checked
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100vh",
-            fontSize: "24px",
-            fontFamily: "Inter, sans-serif",
-          }}
-        >
-          Loading authentication...
+        <div className="flex justify-center items-center h-screen bg-base-100">
+          <p className="text-xl text-white">Loading...</p>
         </div>
       ) : (
         children

@@ -1,6 +1,6 @@
 import React from "react";
 
-const AuthTabs = ({ tab, setTab }) => (
+const AuthTabs = ({ tab, handleTabChange }) => (
   // Added `tabs` class for better semantic integration with daisyUI
   <div role="tablist" className="tabs relative mb-4 grid grid-cols-2">
     {/* Animated background/indicator */}
@@ -24,7 +24,7 @@ const AuthTabs = ({ tab, setTab }) => (
           ? "text-primary-content" // Active tab text color
           : "text-base-content hover:text-primary" // Inactive tab with a subtle hover
       }`}
-      onClick={() => setTab("login")}
+      onClick={() => handleTabChange("login")}
     >
       Login
     </a>
@@ -37,7 +37,7 @@ const AuthTabs = ({ tab, setTab }) => (
           ? "text-primary-content" // Active tab text color
           : "text-base-content hover:text-primary" // Inactive tab with a subtle hover
       }`}
-      onClick={() => setTab("signup")}
+      onClick={() => handleTabChange("signup")}
     >
       Sign Up
     </a>

@@ -199,6 +199,19 @@ export function useAuthForm({ supabase, session, authLoading }) {
     setFormLoading(false);
   };
 
+  const handleTabChange = (newTab) => {
+    setTab(newTab);
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    setMessage("");
+    setErrors({
+      email: "",
+      password: "",
+      confirmPassword: "",
+    });
+  };
+
   return {
     email,
     password,
@@ -207,7 +220,7 @@ export function useAuthForm({ supabase, session, authLoading }) {
     message,
     errors,
     tab,
-    setTab,
+    handleTabChange,
     handleEmailChange,
     handlePasswordChange,
     handleConfirmPasswordChange,

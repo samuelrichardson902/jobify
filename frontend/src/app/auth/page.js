@@ -17,7 +17,7 @@ const Auth = () => {
     message,
     errors,
     tab,
-    setTab,
+    handleTabChange,
     handleEmailChange,
     handlePasswordChange,
     handleConfirmPasswordChange,
@@ -58,7 +58,7 @@ const Auth = () => {
           title="Jobify"
           headline="Keep Track of all your Job Applications in One Place"
         >
-          <AuthTabs tab={tab} setTab={setTab} />
+          <AuthTabs tab={tab} handleTabChange={handleTabChange} />
 
           <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
             <AuthInput
