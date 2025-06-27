@@ -19,7 +19,7 @@ const AuthTabs = ({ tab, handleTabChange }) => (
     <a
       role="tab"
       // Using `tab` class and refined hover/active states
-      className={`tab relative z-10 text-lg font-semibold rounded-t-lg transition-colors duration-300 ${
+      className={`tab relative z-10 text-md font-semibold rounded-t-lg transition-colors duration-300 ${
         tab === "login"
           ? "text-primary-content" // Active tab text color
           : "text-base-content hover:text-primary" // Inactive tab with a subtle hover
@@ -32,7 +32,7 @@ const AuthTabs = ({ tab, handleTabChange }) => (
     {/* Sign Up Tab */}
     <a
       role="tab"
-      className={`tab relative z-10 text-lg font-semibold rounded-t-lg transition-colors duration-300 ${
+      className={`tab relative z-10 text-md font-semibold rounded-t-lg transition-colors duration-300 ${
         tab === "signup"
           ? "text-primary-content" // Active tab text color
           : "text-base-content hover:text-primary" // Inactive tab with a subtle hover

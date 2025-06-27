@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" data-theme="jobifyTheme">
+    <html lang="en" data-theme="dark">
       <body>
         <SupabaseAuthProvider>{children}</SupabaseAuthProvider>
       </body>

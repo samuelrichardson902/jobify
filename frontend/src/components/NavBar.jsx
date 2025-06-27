@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { FiSettings } from "react-icons/fi";
 import { useSupabaseAuth } from "@/components/SupabaseAuthProvider";
 
 const pages = [
@@ -59,11 +58,7 @@ export default function NavBar() {
             return (
               <button
                 key={page.path}
-                className={`tab ${
-                  isActive
-                    ? "tab-active !text-white" // CHANGED: Active tab is now pure white
-                    : "!text-gray-400" // Inactive tab is your light grey theme color
-                }`}
+                className={`tab ${isActive ? "tab-active" : ""}`}
                 onClick={() => router.push(page.path)}
               >
                 {page.name}
@@ -75,7 +70,7 @@ export default function NavBar() {
       {/* Right tabs */}
       <div className="flex items-center gap-2">
         <button
-          className="btn bg-error rounded-lg text-white"
+          className="btn bg-error rounded-lg text-error-content"
           onClick={handleLogout}
         >
           Logout

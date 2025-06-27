@@ -16,7 +16,7 @@ export default function RequireAuth({ children }) {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-base-100">
-        <p className="text-xl text-white">Loading...</p>
+        <p className="text-xl text-primary-content">Loading...</p>
       </div>
     );
   }
@@ -24,8 +24,8 @@ export default function RequireAuth({ children }) {
   if (!user || !session) {
     return (
       <div className="flex justify-center items-center h-screen bg-base-100">
-        <p className="text-xl text-white">Access Denied</p>
-        <p className="text-white">
+        <p className="text-xl text-primary-content">Access Denied</p>
+        <p className="text-primary-content">
           You need to be logged in to view this page.
         </p>
       </div>

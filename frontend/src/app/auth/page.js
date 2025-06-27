@@ -40,7 +40,7 @@ const Auth = () => {
         />
         {/* Centered Loading Spinner */}
         <div className="relative z-10 flex justify-center items-center h-screen">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <span className="loading loading-spinner loading-lg text-primary-content"></span>
         </div>
       </div>
     );
