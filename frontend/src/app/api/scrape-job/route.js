@@ -1,97 +1,160 @@
-import { NextResponse } from "next/server";
+import axios from "axios";
+import { JSDOM } from "jsdom";
+import { GoogleGenAI } from "@google/genai";
+
+// Initialize with API key
+const ai = new GoogleGenAI({});
 
 export async function POST(request) {
   try {
     const { url } = await request.json();
-
     if (!url) {
-      return NextResponse.json({ error: "URL is required" }, { status: 400 });
+      return Response.json({ error: "Missing URL" }, { status: 400 });
     }
 
-    // Validate URL format
-    try {
-      new URL(url);
-    } catch {
-      return NextResponse.json(
-        { error: "Invalid URL format" },
+    const response = await axios.get(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+      },
+      timeout: 10000,
+    });
+
+    const dom = new JSDOM(response.data);
+    const document = dom.window.document;
+
+    // Step 1: Try extracting structured data (JSON-LD)
+    let jobData = null;
+    const jsonLdScripts = document.querySelectorAll(
+      "script[type='application/ld+json']"
+    );
+
+    for (const script of jsonLdScripts) {
+      try {
+        const data = JSON.parse(script.textContent);
+        if (data["@type"] === "JobPosting") {
+          jobData = {
+            company: data.hiringOrganization?.name || null,
+            location:
+              data.jobLocation?.address?.addressLocality ||
+              data.jobLocation?.address?.addressRegion ||
+              null,
+            salary: extractSalary(data.baseSalary),
+            notes: data.description
+              ? stripHtml(data.description).slice(0, 300)
+              : null,
+            applyBy: data.validThrough || null,
+          };
+          break;
+        }
+      } catch (parseError) {
+        console.warn("Failed to parse JSON-LD:", parseError.message);
+      }
+    }
+
+    // Step 2: Fallback to Gemini if JSON-LD missing
+    if (!jobData) {
+      if (!process.env.GEMINI_API_KEY) {
+        throw new Error("Google AI API key not configured");
+      }
+
+      const plainText = document.body.textContent
+        .replace(/\s+/g, " ")
+        .slice(0, 10000);
+      const prompt = `
+Extract job information from this text and return ONLY a valid JSON object with these exact keys:
+{ "company": string|null, "location": string|null, "salary": string|null, "notes": string|null, "applyBy": string|null }
+
+Job posting text:
+"""${plainText}"""
+
+Return only the JSON object, no other text.
+      `;
+
+      const response = await ai.models.generateContent({
+        model: process.env.GEMINI_MODEL_VERSION,
+        contents: prompt,
+      });
+
+      jobData = safeParseJSON(response.text);
+    }
+
+    if (!jobData) {
+      throw new Error("Could not extract job data from the provided URL");
+    }
+
+    return Response.json({ success: true, data: jobData });
+  } catch (err) {
+    console.error("Job extraction error:", err);
+
+    if (err.code === "ENOTFOUND" || err.code === "ECONNREFUSED") {
+      return Response.json(
+        { error: "Invalid URL or website unreachable" },
         { status: 400 }
       );
     }
 
-    // Simulate API delay for realistic behavior
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (err.message.includes("API key")) {
+      return Response.json(
+        { error: "API configuration error" },
+        { status: 500 }
+      );
+    }
 
-    // Generate placeholder data based on the URL domain
-    const domain = new URL(url).hostname.replace(/^www\./, "");
-    const placeholderData = generatePlaceholderData(domain, url);
-
-    return NextResponse.json(placeholderData);
-  } catch (error) {
-    console.error("Error processing request:", error);
-    return NextResponse.json(
-      { error: "Failed to process job data" },
+    return Response.json(
+      { error: "Failed to extract job data" },
       { status: 500 }
     );
   }
 }
 
-function generatePlaceholderData(domain, url) {
-  const company = `${domain.split(".")[0]} Corp`;
+// Utility: Remove HTML tags safely
+function stripHtml(html) {
+  if (typeof html !== "string") return "";
+  return html.replace(/<\/?[^>]+(>|$)/g, "").trim();
+}
 
-  const locations = [
-    "Remote",
-    "London, UK",
-    "Manchester, UK",
-    "Birmingham, UK",
-    "Edinburgh, Scotland",
-    "Cardiff, Wales",
-    "Hybrid - London",
-    "Remote (UK only)",
-  ];
+// Utility: Extract salary information
+function extractSalary(baseSalary) {
+  if (!baseSalary) return null;
 
-  const salaries = [
-    "45000",
-    "55000",
-    "65000",
-    "75000",
-    "85000",
-    "95000",
-    "105000",
-    "120000",
-  ];
+  if (baseSalary.value?.value) {
+    const currency = baseSalary.currency || "$";
+    return `${currency}${baseSalary.value.value}`;
+  }
 
-  const positions = [
-    "Senior Software Engineer",
-    "Full Stack Developer",
-    "Frontend Developer",
-    "Backend Developer",
-    "DevOps Engineer",
-    "Product Manager",
-    "UX/UI Designer",
-    "Data Scientist",
-  ];
+  if (baseSalary.value?.minValue && baseSalary.value?.maxValue) {
+    const currency = baseSalary.currency || "$";
+    return `${currency}${baseSalary.value.minValue} - ${currency}${baseSalary.value.maxValue}`;
+  }
 
-  // Random selections for variety
-  const location = locations[Math.floor(Math.random() * locations.length)];
-  const salary = salaries[Math.floor(Math.random() * salaries.length)];
-  const position = positions[Math.floor(Math.random() * positions.length)];
+  return null;
+}
 
-  const notes = `Position: ${position}
-Company: ${company}
-Auto-filled from: ${url}
-Requirements: 3+ years experience, strong communication skills
-Benefits: Health insurance, pension, flexible working
-Application deadline: Apply ASAP`;
+// Utility: Parse JSON safely (NO eval!)
+function safeParseJSON(text) {
+  try {
+    // Try to find JSON object in the response
+    const jsonMatch = text.match(/\{[\s\S]*?\}/);
+    if (!jsonMatch) return null;
 
-  const applyBy = new Date(
-    Date.now() + Math.floor(Math.random() * 7) * 24 * 60 * 60 * 1000
-  );
+    // Use JSON.parse instead of eval for security
+    const parsed = JSON.parse(jsonMatch[0]);
 
-  return {
-    company,
-    location,
-    salary,
-    notes,
-    applyBy,
-  };
+    // Validate the structure
+    if (typeof parsed === "object" && parsed !== null) {
+      return {
+        company: parsed.company || null,
+        location: parsed.location || null,
+        salary: parsed.salary || null,
+        notes: parsed.notes || null,
+        applyBy: parsed.applyBy || null,
+      };
+    }
+
+    return null;
+  } catch (parseError) {
+    console.warn("Failed to parse AI response:", parseError.message);
+    return null;
+  }
 }

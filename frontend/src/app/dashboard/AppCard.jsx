@@ -1,4 +1,4 @@
-const AppCard = ({ jobObj }) => {
+const AppCard = ({ jobObj, onEdit, onDelete }) => {
   const formatSalary = (salary) => {
     if (!salary) return "Not specified";
     const num = parseInt(salary);
@@ -13,6 +13,37 @@ const AppCard = ({ jobObj }) => {
     });
   };
 
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      pending: { color: "badge-warning", text: "Need to Apply" },
+      applied: { color: "badge-info", text: "Applied" },
+      interviewing: { color: "badge-primary", text: "Interviewing" },
+      offer: { color: "badge-success", text: "Offer" },
+      rejected: { color: "badge-error", text: "Rejected" },
+    };
+
+    const config = statusConfig[status] || statusConfig.pending;
+    return (
+      <div className={`badge ${config.color} badge-sm`}>{config.text}</div>
+    );
+  };
+
+  const ensureExternalLink = (link) => {
+    if (!link) return null;
+    // If the link already has a protocol, return as is
+    if (link.startsWith("http://") || link.startsWith("https://")) {
+      return link;
+    }
+    // If it starts with //, add https:
+    if (link.startsWith("//")) {
+      return `https:${link}`;
+    }
+    // Otherwise, add https://
+    return `https://${link}`;
+  };
+
+  const isPending = jobObj?.status === "pending";
+
   return (
     <div className="card bg-base-200 shadow-md hover:shadow-lg transition-shadow duration-200">
       <div className="card-body p-6">
@@ -22,19 +53,12 @@ const AppCard = ({ jobObj }) => {
             <h3 className="card-title text-lg font-bold text-base-content line-clamp-1">
               {jobObj?.company || "Company Name"}
             </h3>
-            <p className="text-base-content/70 text-sm">
-              {jobObj?.location || "Location"}
-            </p>
+            <p className="text-base-content/70 text-sm">{jobObj?.id}</p>
+            <p className="text-base-content/70 text-sm">{jobObj?.location}</p>
           </div>
 
           {/* Status Badge */}
-          <div
-            className={`badge ${
-              jobObj?.hasApplied ? "badge-success" : "badge-warning"
-            } badge-sm`}
-          >
-            {jobObj?.hasApplied ? "Applied" : "Pending"}
-          </div>
+          {getStatusBadge(jobObj?.status)}
         </div>
 
         {/* Salary */}
@@ -47,11 +71,11 @@ const AppCard = ({ jobObj }) => {
         )}
 
         {/* Apply By Date */}
-        {!jobObj?.hasApplied && jobObj?.applyBy && (
+        {isPending && jobObj?.apply_by && (
           <div className="mb-3">
             <span className="text-xs text-base-content/60">Apply by: </span>
             <span className="text-sm font-medium text-warning">
-              {formatDate(jobObj.applyBy)}
+              {formatDate(jobObj.apply_by)}
             </span>
           </div>
         )}
@@ -70,7 +94,7 @@ const AppCard = ({ jobObj }) => {
           <div className="flex gap-2">
             {jobObj?.link && (
               <a
-                href={jobObj.link}
+                href={ensureExternalLink(jobObj.link)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-ghost btn-xs text-primary"
@@ -95,10 +119,10 @@ const AppCard = ({ jobObj }) => {
               className="dropdown-content menu bg-base-100 rounded-box z-[1] w-32 p-2 shadow"
             >
               <li>
-                <a>Edit</a>
+                <button onClick={() => onEdit(jobObj.id)}>Edit</button>
               </li>
               <li>
-                <a>Delete</a>
+                <button onClick={() => onDelete(jobObj.id)}>Delete</button>
               </li>
             </ul>
           </div>

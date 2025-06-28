@@ -1,41 +1,66 @@
 import { useState, useEffect } from "react";
 import InputField from "@/components/formComponents/InputField";
 import TextAreaField from "@/components/formComponents/TextAreaField";
-import ToggleSwitch from "@/components/formComponents/ToggleSwitch";
 import DateField from "@/components/formComponents/DateField";
 import AutoFillButton from "@/components/formComponents/AutoFillButton";
+import Selector from "@/components/formComponents/Selector";
 
-const AddAppModal = ({ modalId }) => {
-  const [hasApplied, setHasApplied] = useState(true);
+const AppModal = ({ modalId, onSaveJob, setAppToEdit, appToEdit }) => {
   const [applyBy, setApplyBy] = useState(null);
   const [link, setLink] = useState("");
   const [company, setCompany] = useState("");
   const [location, setLocation] = useState("");
   const [salary, setSalary] = useState("");
   const [notes, setNotes] = useState("");
+  const [status, setStatus] = useState("applied");
   const [isAutoFilling, setIsAutoFilling] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [linkError, setLinkError] = useState("");
+  const [saveError, setSaveError] = useState("");
 
+  // Check if we're in edit mode
+  const isEditMode = appToEdit !== null;
+
+  useEffect(() => {
+    if (appToEdit) {
+      // Populate form with existing data for editing
+      setApplyBy(appToEdit.apply_by ? new Date(appToEdit.apply_by) : null);
+      setLink(appToEdit.link || "");
+      setCompany(appToEdit.company || "");
+      setLocation(appToEdit.location || "");
+      setSalary(appToEdit.salary ? appToEdit.salary.toString() : "");
+      setNotes(appToEdit.notes || "");
+      setStatus(appToEdit.status || "applied");
+    }
+  }, [appToEdit]);
+
+  // Reset form when modal opens for new applications
   useEffect(() => {
     const modal = document.getElementById(modalId);
     if (!modal) return;
     const observer = new MutationObserver(() => {
-      if (modal.hasAttribute("open")) resetForm();
+      if (modal.hasAttribute("open") && !appToEdit) {
+        // Only reset if we're not editing (appToEdit is null)
+        resetForm();
+      }
     });
     observer.observe(modal, { attributes: true });
     return () => observer.disconnect();
-  }, [modalId]);
+  }, [modalId, appToEdit]);
 
   const resetForm = () => {
-    setHasApplied(true);
     setApplyBy(null);
     setLink("");
     setCompany("");
     setLocation("");
     setSalary("");
     setNotes("");
+    setStatus("applied");
     setIsAutoFilling(false);
+    setIsSaving(false);
     setLinkError("");
+    setSaveError("");
+    setAppToEdit(null);
   };
 
   const handleAutoFill = async () => {
@@ -56,7 +81,8 @@ const AddAppModal = ({ modalId }) => {
         body: JSON.stringify({ url: link }),
       });
 
-      const jobData = await res.json();
+      const jobData = (await res.json()).data;
+      console.log(jobData);
       if (jobData.company) setCompany(jobData.company);
       if (jobData.location) setLocation(jobData.location);
       if (jobData.salary) setSalary(jobData.salary);
@@ -69,31 +95,58 @@ const AddAppModal = ({ modalId }) => {
     }
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    const appData = {
-      hasApplied,
-      applyBy: hasApplied ? null : applyBy,
-      link,
-      company,
-      location,
-      salary,
-      notes,
-    };
-    console.log("Saving application:", appData);
-    resetForm();
-    document.getElementById(modalId)?.close();
+
+    // Basic validation
+    if (!company.trim() && !link.trim()) {
+      setSaveError("Company name or Link is required");
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError("");
+
+    try {
+      const jobData = {
+        applyBy,
+        link,
+        company,
+        location,
+        salary,
+        notes,
+        status,
+        // Include application ID if we're editing
+        ...(isEditMode && { applicationId: appToEdit.id }),
+      };
+
+      await onSaveJob(jobData);
+      resetForm();
+      document.getElementById(modalId)?.close();
+    } catch (error) {
+      console.error("Save error:", error);
+      setSaveError(error.message || "Failed to save application");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
     <dialog id={modalId} className="modal">
       <div className="modal-box">
-        <h3 className="font-bold text-xl mb-4">Add Application</h3>
+        <h3 className="font-bold text-xl mb-4">
+          {isEditMode ? "Edit Application" : "Add Application"}
+        </h3>
+        {saveError && (
+          <div className="alert alert-error text-error-content mb-4">
+            <span>{saveError}</span>
+          </div>
+        )}
         <form onSubmit={handleSave} className="space-y-4">
           <div className="flex gap-2">
             <div className="flex-1">
               <InputField
-                label="Application Link"
+                label="Job Posting Link"
                 value={link}
                 onChange={(e) => {
                   setLink(e.target.value);
@@ -115,6 +168,7 @@ const AddAppModal = ({ modalId }) => {
             value={company}
             onChange={(e) => setCompany(e.target.value)}
             placeholder="Company name"
+            required
             onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
           />
           <InputField
@@ -139,16 +193,24 @@ const AddAppModal = ({ modalId }) => {
             placeholder="Additional notes..."
             onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
           />
-          <ToggleSwitch
-            label="Already Applied?"
-            description="Toggle if you've already submitted your application"
-            checked={hasApplied}
-            onChange={() => {
-              setHasApplied((prev) => !prev);
-              if (!hasApplied) setApplyBy(null);
+          <Selector
+            label="Status"
+            value={status}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              setApplyBy(null);
             }}
+            onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
+            options={[
+              { value: "pending", label: "Need to Apply" },
+              { value: "applied", label: "Applied" },
+              { value: "interviewing", label: "Interviewing" },
+              { value: "rejected", label: "Rejected" },
+              { value: "offer", label: "Offer" },
+            ]}
           />
-          {!hasApplied && (
+
+          {status === "pending" && (
             <DateField
               label="Apply By Date"
               helper="Set a deadline reminder"
@@ -164,17 +226,41 @@ const AddAppModal = ({ modalId }) => {
                 resetForm();
                 document.getElementById(modalId)?.close();
               }}
+              disabled={isSaving}
             >
               Cancel
             </button>
-            <button type="submit" className="btn btn-primary">
-              Save Application
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <>
+                  <span className="loading loading-spinner loading-sm"></span>
+                  {isEditMode ? "Updating..." : "Saving..."}
+                </>
+              ) : isEditMode ? (
+                "Update Application"
+              ) : (
+                "Save Application"
+              )}
             </button>
           </div>
         </form>
       </div>
+      <form method="dialog" className="modal-backdrop">
+        <button
+          onClick={() => {
+            resetForm();
+            document.getElementById(modalId)?.close();
+          }}
+        >
+          close
+        </button>
+      </form>
     </dialog>
   );
 };
 
-export default AddAppModal;
+export default AppModal;
