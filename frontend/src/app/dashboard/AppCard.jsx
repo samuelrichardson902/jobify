@@ -1,4 +1,51 @@
-const AppCard = ({ jobObj, onEdit, onDelete }) => {
+import React, { useState, useRef, useEffect } from "react";
+
+const AppCard = ({ jobObj, onEdit, onDelete, onStatusChange, dragHandle }) => {
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const statusRef = useRef(null);
+
+  const statusOptions = [
+    { value: "pending", color: "badge-warning", text: "Need to Apply" },
+    { value: "applied", color: "badge-info", text: "Applied" },
+    { value: "interviewing", color: "badge-primary", text: "Interviewing" },
+    { value: "offer", color: "badge-success", text: "Offer" },
+    { value: "rejected", color: "badge-error", text: "Rejected" },
+  ];
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (statusRef.current && !statusRef.current.contains(event.target)) {
+        setStatusDropdownOpen(false);
+      }
+    }
+    if (statusDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [statusDropdownOpen]);
+
+  const handleStatusClick = (e) => {
+    e.stopPropagation();
+    setStatusDropdownOpen((open) => !open);
+  };
+
+  const handleStatusSelect = (newStatus) => {
+    setStatusDropdownOpen(false);
+    if (newStatus !== jobObj.status && onStatusChange) {
+      onStatusChange(jobObj.id, newStatus);
+    }
+  };
+
+  const getStatusConfig = (status) => {
+    return (
+      statusOptions.find((opt) => opt.value === status) || statusOptions[0]
+    );
+  };
+
   const formatSalary = (salary) => {
     if (!salary) return "Not specified";
     const num = parseInt(salary);
@@ -11,21 +58,6 @@ const AppCard = ({ jobObj, onEdit, onDelete }) => {
       month: "short",
       day: "numeric",
     });
-  };
-
-  const getStatusBadge = (status) => {
-    const statusConfig = {
-      pending: { color: "badge-warning", text: "Need to Apply" },
-      applied: { color: "badge-info", text: "Applied" },
-      interviewing: { color: "badge-primary", text: "Interviewing" },
-      offer: { color: "badge-success", text: "Offer" },
-      rejected: { color: "badge-error", text: "Rejected" },
-    };
-
-    const config = statusConfig[status] || statusConfig.pending;
-    return (
-      <div className={`badge ${config.color} badge-sm`}>{config.text}</div>
-    );
   };
 
   const ensureExternalLink = (link) => {
@@ -45,7 +77,7 @@ const AppCard = ({ jobObj, onEdit, onDelete }) => {
   const isPending = jobObj?.status === "pending";
 
   return (
-    <div className="card bg-base-200 shadow-md hover:shadow-lg transition-shadow duration-200">
+    <div className="card bg-base-200 shadow-md hover:shadow-lg transition-shadow duration-200 relative">
       <div className="card-body p-6">
         {/* Header */}
         <div className="flex justify-between items-start mb-4">
@@ -57,8 +89,36 @@ const AppCard = ({ jobObj, onEdit, onDelete }) => {
             <p className="text-base-content/70 text-sm">{jobObj?.location}</p>
           </div>
 
-          {/* Status Badge */}
-          {getStatusBadge(jobObj?.status)}
+          {/* Status Badge as Dropdown */}
+          <div className="relative" ref={statusRef}>
+            <div
+              className={`badge ${
+                getStatusConfig(jobObj?.status).color
+              } badge-sm cursor-pointer select-none`}
+              onClick={handleStatusClick}
+              tabIndex={0}
+            >
+              {getStatusConfig(jobObj?.status).text}
+            </div>
+            {statusDropdownOpen && (
+              <ul className="absolute mt-2 w-40 bg-base-100 rounded shadow z-10 border border-base-300">
+                {statusOptions.map((opt) => (
+                  <li key={opt.value}>
+                    <button
+                      className={`w-full text-left px-4 py-2 hover:bg-base-200 flex items-center gap-2 ${
+                        jobObj.status === opt.value ? "font-bold" : ""
+                      }`}
+                      onClick={() => handleStatusSelect(opt.value)}
+                    >
+                      <span className={`badge ${opt.color} badge-xs`}></span>
+                      {opt.text}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          {dragHandle && <div className="relative z-10">{dragHandle}</div>}
         </div>
 
         {/* Salary */}

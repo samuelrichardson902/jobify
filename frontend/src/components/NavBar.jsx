@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSupabaseAuth } from "@/components/SupabaseAuthProvider";
+import ThemeSwitcher from "./ThemeSwitcher";
 
 const pages = [
   { name: "Dashboard", path: "/dashboard" },
@@ -69,6 +70,7 @@ export default function NavBar() {
       </div>
       {/* Right tabs */}
       <div className="flex items-center gap-2">
+        <ThemeSwitcher />
         <button
           className="btn bg-error rounded-lg text-error-content"
           onClick={handleLogout}

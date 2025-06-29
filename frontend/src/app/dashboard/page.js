@@ -7,8 +7,9 @@ import RequireAuth from "@/components/RequireAuth";
 import NavBar from "@/components/NavBar";
 import AddAppBtn from "./AddAppBtn";
 import AppModal from "./AppModal";
-import AppCard from "./AppCard";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
+import ApplicationsDisplay from "./ApplicationsDisplay";
+import Cookies from "js-cookie";
 
 const Dashboard = () => {
   const { user } = useSupabaseAuth();
@@ -18,6 +19,15 @@ const Dashboard = () => {
   const [appToDelete, setAppToDelete] = useState(null);
   const modalId = "appModal";
   const confirmModalId = "confirmModal";
+  const [view, setView] = useState(() => {
+    // Initialize from cookie, default to "grid"
+    return Cookies.get("dashboard-view") || "grid";
+  });
+
+  // Save view preference to cookie whenever it changes
+  useEffect(() => {
+    Cookies.set("dashboard-view", view, { expires: 365 }); // Expires in 1 year
+  }, [view]);
 
   // Fetch applications on component mount
   useEffect(() => {
@@ -32,6 +42,7 @@ const Dashboard = () => {
         .from("applications")
         .select("*")
         .eq("user_id", user.id)
+        .order("position", { ascending: true })
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -52,34 +63,55 @@ const Dashboard = () => {
       throw new Error("Please log in to save applications");
     }
 
-    const appData = {
-      user_id: user.id,
-      status: jobData.status,
-      apply_by: jobData.status === "pending" ? jobData.applyBy : null,
-      link: jobData.link.trim() || null,
-      company: jobData.company.trim() || null,
-      location: jobData.location.trim() || null,
-      salary: jobData.salary ? parseInt(jobData.salary) : null,
-      notes: jobData.notes.trim() || null,
-    };
-
     let error;
 
     if (jobData.applicationId) {
       // Update existing application
+      const appData = {
+        user_id: user.id,
+        status: jobData.status,
+        apply_by: jobData.status === "pending" ? jobData.applyBy : null,
+        link: jobData.link.trim() || null,
+        company: jobData.company.trim() || null,
+        location: jobData.location.trim() || null,
+        salary: jobData.salary ? parseInt(jobData.salary) : null,
+        notes: jobData.notes.trim() || null,
+        // Do not change position on edit
+      };
       const { error: updateError } = await supabase
         .from("applications")
         .update(appData)
         .eq("id", jobData.applicationId)
         .eq("user_id", user.id); // Ensure user can only update their own applications
-
       error = updateError;
     } else {
-      // Create new application
+      // Increment position of all existing applications for this user
+      if (applications.length > 0) {
+        await Promise.all(
+          applications.map((app) =>
+            supabase
+              .from("applications")
+              .update({ position: (app.position || 0) + 1 })
+              .eq("id", app.id)
+              .eq("user_id", user.id)
+          )
+        );
+      }
+      // Create new application at position 0
+      const appData = {
+        user_id: user.id,
+        status: jobData.status,
+        apply_by: jobData.status === "pending" ? jobData.applyBy : null,
+        link: jobData.link.trim() || null,
+        company: jobData.company.trim() || null,
+        location: jobData.location.trim() || null,
+        salary: jobData.salary ? parseInt(jobData.salary) : null,
+        notes: jobData.notes.trim() || null,
+        position: 0,
+      };
       const { error: insertError } = await supabase
         .from("applications")
         .insert([appData]);
-
       error = insertError;
     }
 
@@ -155,6 +187,38 @@ const Dashboard = () => {
     document.getElementById(modalId)?.showModal();
   };
 
+  const handleStatusChange = async (jobId, newStatus) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from("applications")
+        .update({ status: newStatus })
+        .eq("id", jobId)
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error updating status:", error);
+        return;
+      }
+      // Refresh applications list
+      await fetchApplications();
+    } catch (err) {
+      console.error("Unexpected error updating status:", err);
+    }
+  };
+
+  const saveNewOrder = async (orderedApps) => {
+    // orderedApps: array of app objects in new order
+    const updates = orderedApps.map((app, idx) =>
+      supabase
+        .from("applications")
+        .update({ position: idx })
+        .eq("id", app.id)
+        .eq("user_id", user.id)
+    );
+    await Promise.all(updates);
+  };
+
   return (
     <>
       {user && (
@@ -207,8 +271,96 @@ const Dashboard = () => {
                   <h2 className="text-2xl font-bold text-base-content">
                     Your Applications ({applications.length})
                   </h2>
-                  <div className="text-sm text-base-content/60">
-                    Filters here soon
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm text-base-content/60">
+                      Filters here soon
+                    </span>
+                    <button
+                      className={`btn btn-xs ${
+                        view === "grid" ? "btn-primary" : "btn-ghost"
+                      }`}
+                      onClick={() => setView("grid")}
+                      aria-label="Grid view"
+                    >
+                      <svg
+                        width="20"
+                        height="20"
+                        fill="none"
+                        viewBox="0 0 20 20"
+                      >
+                        <rect
+                          x="3"
+                          y="3"
+                          width="6"
+                          height="6"
+                          rx="1"
+                          fill="currentColor"
+                        />
+                        <rect
+                          x="11"
+                          y="3"
+                          width="6"
+                          height="6"
+                          rx="1"
+                          fill="currentColor"
+                        />
+                        <rect
+                          x="3"
+                          y="11"
+                          width="6"
+                          height="6"
+                          rx="1"
+                          fill="currentColor"
+                        />
+                        <rect
+                          x="11"
+                          y="11"
+                          width="6"
+                          height="6"
+                          rx="1"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      className={`btn btn-xs ${
+                        view === "list" ? "btn-primary" : "btn-ghost"
+                      }`}
+                      onClick={() => setView("list")}
+                      aria-label="List view"
+                    >
+                      <svg
+                        width="20"
+                        height="20"
+                        fill="none"
+                        viewBox="0 0 20 20"
+                      >
+                        <rect
+                          x="3"
+                          y="4"
+                          width="14"
+                          height="3"
+                          rx="1"
+                          fill="currentColor"
+                        />
+                        <rect
+                          x="3"
+                          y="9"
+                          width="14"
+                          height="3"
+                          rx="1"
+                          fill="currentColor"
+                        />
+                        <rect
+                          x="3"
+                          y="14"
+                          width="14"
+                          height="3"
+                          rx="1"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </button>
                   </div>
                 </div>
 
@@ -223,17 +375,15 @@ const Dashboard = () => {
                     </p>
                   </div>
                 ) : (
-                  /* Job Cards Grid */
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {applications.map((job) => (
-                      <AppCard
-                        key={job.id}
-                        jobObj={job}
-                        onEdit={handleEditJob}
-                        onDelete={handleDeleteJob}
-                      />
-                    ))}
-                  </div>
+                  <ApplicationsDisplay
+                    applications={applications}
+                    setApplications={setApplications}
+                    onEdit={handleEditJob}
+                    onDelete={handleDeleteJob}
+                    onStatusChange={handleStatusChange}
+                    saveNewOrder={saveNewOrder}
+                    view={view}
+                  />
                 )}
               </div>
             </div>
