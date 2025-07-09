@@ -80,7 +80,7 @@ const AppListCard = ({
 
   return (
     <div
-      className={`border rounded bg-base-200 px-4 py-2 mb-1 transition-all duration-200 ${
+      className={` rounded-lg bg-base-200 px-4 py-2 mb-1 transition-all duration-200 ${
         isExpanded ? "shadow-lg" : "shadow"
       }`}
       style={{ position: "relative" }}
@@ -140,6 +140,12 @@ const AppListCard = ({
             <div className="mb-1">
               <span className="font-medium">Apply by:</span>{" "}
               {formatDate(job.apply_by)}
+            </div>
+          )}
+          {job.created_at && (
+            <div className="mb-1">
+              <span className="font-medium">Applied:</span>{" "}
+              <span className="text-success">{formatDate(job.created_at)}</span>
             </div>
           )}
           {job.link && (

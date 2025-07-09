@@ -140,6 +140,16 @@ const AppCard = ({ jobObj, onEdit, onDelete, onStatusChange, dragHandle }) => {
           </div>
         )}
 
+        {/* Applied Date */}
+        {jobObj?.created_at && (
+          <div className="mb-3">
+            <span className="text-xs text-base-content/60">Applied: </span>
+            <span className="text-sm font-medium text-success">
+              {formatDate(jobObj.created_at)}
+            </span>
+          </div>
+        )}
+
         {/* Notes Preview */}
         {jobObj?.notes && (
           <div className="mb-4">

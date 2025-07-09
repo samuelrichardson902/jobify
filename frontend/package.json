@@ -16,6 +16,7 @@
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/supabase-js": "^2.50.1",
     "@tailwindcss/postcss": "^4.1.10",
+    "autoprefixer": "^10.4.21",
     "axios": "^1.10.0",
     "cally": "^0.8.0",
     "daisyui": "^5.0.43",
@@ -24,13 +25,10 @@
     "jsdom": "^26.1.0",
     "next": "15.3.4",
     "next-auth": "^4.24.11",
+    "postcss": "^8.5.6",
     "react": "^19.0.0",
     "react-datepicker": "^8.4.0",
     "react-dom": "^19.0.0",
     "tailwindcss": "^4.1.10"
-  },
-  "devDependencies": {
-    "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.6"
   }
 }

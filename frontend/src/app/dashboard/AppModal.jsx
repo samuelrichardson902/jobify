@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import InputField from "@/components/formComponents/InputField";
 import TextAreaField from "@/components/formComponents/TextAreaField";
 import DateField from "@/components/formComponents/DateField";
 import AutoFillButton from "@/components/formComponents/AutoFillButton";
-import Selector from "@/components/formComponents/Selector";
 
 const AppModal = ({ modalId, onSaveJob, setAppToEdit, appToEdit }) => {
   const [applyBy, setApplyBy] = useState(null);
@@ -17,9 +16,35 @@ const AppModal = ({ modalId, onSaveJob, setAppToEdit, appToEdit }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [linkError, setLinkError] = useState("");
   const [saveError, setSaveError] = useState("");
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const statusRef = useRef(null);
+
+  const statusOptions = [
+    { value: "pending", color: "badge-warning", text: "Need to Apply" },
+    { value: "applied", color: "badge-info", text: "Applied" },
+    { value: "interviewing", color: "badge-primary", text: "Interviewing" },
+    { value: "offer", color: "badge-success", text: "Offer" },
+    { value: "rejected", color: "badge-error", text: "Rejected" },
+  ];
 
   // Check if we're in edit mode
   const isEditMode = appToEdit !== null;
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (statusRef.current && !statusRef.current.contains(event.target)) {
+        setStatusDropdownOpen(false);
+      }
+    }
+    if (statusDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [statusDropdownOpen]);
 
   useEffect(() => {
     if (appToEdit) {
@@ -60,7 +85,25 @@ const AppModal = ({ modalId, onSaveJob, setAppToEdit, appToEdit }) => {
     setIsSaving(false);
     setLinkError("");
     setSaveError("");
+    setStatusDropdownOpen(false);
     setAppToEdit(null);
+  };
+
+  const handleStatusClick = (e) => {
+    e.stopPropagation();
+    setStatusDropdownOpen((open) => !open);
+  };
+
+  const handleStatusSelect = (newStatus) => {
+    setStatusDropdownOpen(false);
+    setStatus(newStatus);
+    setApplyBy(null);
+  };
+
+  const getStatusConfig = (status) => {
+    return (
+      statusOptions.find((opt) => opt.value === status) || statusOptions[0]
+    );
   };
 
   const handleAutoFill = async () => {
@@ -193,22 +236,41 @@ const AppModal = ({ modalId, onSaveJob, setAppToEdit, appToEdit }) => {
             placeholder="Additional notes..."
             onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
           />
-          <Selector
-            label="Status"
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
-              setApplyBy(null);
-            }}
-            onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
-            options={[
-              { value: "pending", label: "Need to Apply" },
-              { value: "applied", label: "Applied" },
-              { value: "interviewing", label: "Interviewing" },
-              { value: "rejected", label: "Rejected" },
-              { value: "offer", label: "Offer" },
-            ]}
-          />
+          {/* Status Dropdown */}
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Status</span>
+            </label>
+            <div className="relative" ref={statusRef}>
+              <div
+                className={`badge ${
+                  getStatusConfig(status).color
+                } badge-lg cursor-pointer select-none justify-start p-3`}
+                onClick={handleStatusClick}
+                tabIndex={0}
+              >
+                {getStatusConfig(status).text}
+              </div>
+              {statusDropdownOpen && (
+                <ul className="absolute top-full left-0 mt-2 w-48 bg-base-100 rounded shadow z-10 border border-base-300">
+                  {statusOptions.map((opt) => (
+                    <li key={opt.value}>
+                      <button
+                        type="button"
+                        className={`w-full text-left px-4 py-2 hover:bg-base-200 flex items-center gap-2 ${
+                          status === opt.value ? "font-bold" : ""
+                        }`}
+                        onClick={() => handleStatusSelect(opt.value)}
+                      >
+                        <span className={`badge ${opt.color} badge-xs`}></span>
+                        {opt.text}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
 
           {status === "pending" && (
             <DateField
