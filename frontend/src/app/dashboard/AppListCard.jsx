@@ -144,7 +144,7 @@ const AppListCard = ({
           )}
           {job.created_at && (
             <div className="mb-1">
-              <span className="font-medium">Applied:</span>{" "}
+              <span className="font-medium">Created:</span>{" "}
               <span className="text-success">{formatDate(job.created_at)}</span>
             </div>
           )}

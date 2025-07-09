@@ -6,8 +6,13 @@ import AuthCard from "./AuthCard";
 import AuthTabs from "./AuthTabs";
 import AuthInput from "./AuthInput";
 import AuthButton from "./AuthButton";
+import { useEffect } from "react";
 
 const Auth = () => {
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") || "dark";
+    document.documentElement.setAttribute("data-theme", savedTheme);
+  }, []);
   const { supabase, session, loading: authLoading } = useSupabaseAuth();
   const {
     email,

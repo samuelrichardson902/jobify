@@ -3,11 +3,9 @@ const AuthCard = ({ title, headline, children }) => (
     <div className="card-body p-8 sm:p-10">
       <div className="text-center mb-4">
         <h2 className="text-4xl font-extrabold text-primary">{title}</h2>
-        <h4 className="text-l font-bold text-primary-content pt-4">
-          {headline}
-        </h4>
+        <h4 className="text-l font-bold text-base-content pt-4">{headline}</h4>
       </div>
-      <div className="text-primary-content">{children}</div>
+      <div className="text-base-content">{children}</div>
     </div>
   </div>
 );

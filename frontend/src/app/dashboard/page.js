@@ -219,6 +219,26 @@ const Dashboard = () => {
     await Promise.all(updates);
   };
 
+  // Split applications into sections
+  const now = new Date();
+  const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const urgentApps = applications.filter(
+    (app) =>
+      app.status === "pending" &&
+      app.apply_by &&
+      new Date(app.apply_by) <= oneWeekFromNow
+  );
+  const rejectedApps = applications.filter((app) => app.status === "rejected");
+  const otherApps = applications.filter(
+    (app) =>
+      app.status !== "rejected" &&
+      !(
+        app.status === "pending" &&
+        app.apply_by &&
+        new Date(app.apply_by) <= oneWeekFromNow
+      )
+  );
+
   return (
     <>
       {user && (
@@ -272,9 +292,6 @@ const Dashboard = () => {
                     Your Applications ({applications.length})
                   </h2>
                   <div className="flex items-center gap-4">
-                    <span className="text-sm text-base-content/60">
-                      Filters here soon
-                    </span>
                     <button
                       className={`btn btn-xs ${
                         view === "grid" ? "btn-primary" : "btn-ghost"
@@ -376,7 +393,9 @@ const Dashboard = () => {
                   </div>
                 ) : (
                   <ApplicationsDisplay
-                    applications={applications}
+                    urgentApps={urgentApps}
+                    rejectedApps={rejectedApps}
+                    otherApps={otherApps}
                     setApplications={setApplications}
                     onEdit={handleEditJob}
                     onDelete={handleDeleteJob}

@@ -44,7 +44,7 @@ const AnalyticsDashboard = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-warning">🎯</span>
-                      <span>Industry & location insights</span>
+                      <span>Location insights</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-error">📅</span>

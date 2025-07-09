@@ -85,7 +85,6 @@ const AppCard = ({ jobObj, onEdit, onDelete, onStatusChange, dragHandle }) => {
             <h3 className="card-title text-lg font-bold text-base-content line-clamp-1">
               {jobObj?.company || "Company Name"}
             </h3>
-            <p className="text-base-content/70 text-sm">{jobObj?.id}</p>
             <p className="text-base-content/70 text-sm">{jobObj?.location}</p>
           </div>
 
@@ -143,7 +142,7 @@ const AppCard = ({ jobObj, onEdit, onDelete, onStatusChange, dragHandle }) => {
         {/* Applied Date */}
         {jobObj?.created_at && (
           <div className="mb-3">
-            <span className="text-xs text-base-content/60">Applied: </span>
+            <span className="text-xs text-base-content/60">Created: </span>
             <span className="text-sm font-medium text-success">
               {formatDate(jobObj.created_at)}
             </span>

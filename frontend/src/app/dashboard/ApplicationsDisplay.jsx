@@ -67,46 +67,19 @@ function SortableAppCard({ job, view, expandedId, setExpandedId, ...props }) {
   );
 }
 
-const ApplicationsDisplay = ({
-  applications,
-  setApplications,
+const Section = ({
+  title,
+  jobs,
+  setJobs,
   onEdit,
   onDelete,
   onStatusChange,
   saveNewOrder,
-  view = "grid",
+  view,
+  defaultCollapsed = false,
 }) => {
   const [expandedId, setExpandedId] = useState(null);
-
-  // Handle clicks outside of expanded list items
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (view === "list" && expandedId) {
-        // Check if click is outside of any list item
-        const listItems = document.querySelectorAll('[data-list-item="true"]');
-        let clickedInside = false;
-
-        listItems.forEach((item) => {
-          if (item.contains(event.target)) {
-            clickedInside = true;
-          }
-        });
-
-        if (!clickedInside) {
-          setExpandedId(null);
-        }
-      }
-    };
-
-    if (view === "list" && expandedId) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [expandedId, view]);
-
+  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -117,47 +90,152 @@ const ApplicationsDisplay = ({
 
   const handleDragEnd = async (event) => {
     const { active, over } = event;
-    if (active.id !== over?.id) {
-      const oldIndex = applications.findIndex((item) => item.id === active.id);
-      const newIndex = applications.findIndex((item) => item.id === over.id);
-      const newOrder = arrayMove(applications, oldIndex, newIndex);
-      setApplications(newOrder);
-      if (saveNewOrder) await saveNewOrder(newOrder);
-    }
+    if (!over || active.id === over.id) return;
+    const oldIndex = jobs.findIndex((item) => item.id === active.id);
+    const newIndex = jobs.findIndex((item) => item.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const newOrder = arrayMove(jobs, oldIndex, newIndex);
+    setJobs(newOrder);
+    if (saveNewOrder) await saveNewOrder(newOrder);
   };
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext
-        items={applications.map((job) => job.id)}
-        strategy={rectSortingStrategy}
+    <div className="mb-6">
+      <div
+        className="flex items-center justify-between py-2 px-1 cursor-pointer select-none group"
+        onClick={() => setIsCollapsed(!isCollapsed)}
       >
-        <div
-          className={
-            view === "list"
-              ? "flex flex-col gap-2"
-              : "grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-          }
-        >
-          {applications.map((job) => (
-            <SortableAppCard
-              key={job.id}
-              job={job}
-              view={view}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onStatusChange={onStatusChange}
-              expandedId={expandedId}
-              setExpandedId={setExpandedId}
-            />
-          ))}
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-bold text-base-content">
+            {title}
+            <span className="text-xs text-base-content/50 ml-1 align-middle">
+              ({jobs.length})
+            </span>
+          </h3>
         </div>
-      </SortableContext>
-    </DndContext>
+        <svg
+          className={`w-5 h-5 transition-transform ${
+            isCollapsed ? "rotate-0" : "rotate-180"
+          } text-base-content/60 group-hover:text-base-content`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </div>
+      {!isCollapsed && (
+        <div className="mt-4">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={jobs.map((job) => job.id)}
+              strategy={rectSortingStrategy}
+            >
+              <div
+                className={
+                  view === "list"
+                    ? "flex flex-col gap-2"
+                    : "grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+                }
+              >
+                {jobs.map((job) => (
+                  <SortableAppCard
+                    key={job.id}
+                    job={job}
+                    view={view}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onStatusChange={onStatusChange}
+                    expandedId={expandedId}
+                    setExpandedId={setExpandedId}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ApplicationsDisplay = ({
+  urgentApps = [],
+  rejectedApps = [],
+  otherApps = [],
+  setApplications,
+  onEdit,
+  onDelete,
+  onStatusChange,
+  saveNewOrder,
+  view = "grid",
+}) => {
+  const [urgent, setUrgent] = useState(urgentApps);
+  const [rejected, setRejected] = useState(rejectedApps);
+  const [other, setOther] = useState(otherApps);
+
+  // Keep local state in sync with props
+  useEffect(() => {
+    setUrgent(urgentApps);
+  }, [urgentApps]);
+  useEffect(() => {
+    setRejected(rejectedApps);
+  }, [rejectedApps]);
+  useEffect(() => {
+    setOther(otherApps);
+  }, [otherApps]);
+
+  return (
+    <div>
+      {urgent.length > 0 && (
+        <Section
+          title="Urgent"
+          jobs={urgent}
+          setJobs={setUrgent}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onStatusChange={onStatusChange}
+          saveNewOrder={saveNewOrder}
+          view={view}
+          defaultCollapsed={false}
+        />
+      )}
+      {other.length > 0 && (
+        <Section
+          title="Other Applications"
+          jobs={other}
+          setJobs={setOther}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onStatusChange={onStatusChange}
+          saveNewOrder={saveNewOrder}
+          view={view}
+          defaultCollapsed={false}
+        />
+      )}
+      {rejected.length > 0 && (
+        <Section
+          title="Rejected"
+          jobs={rejected}
+          setJobs={setRejected}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onStatusChange={onStatusChange}
+          saveNewOrder={saveNewOrder}
+          view={view}
+          defaultCollapsed={true}
+        />
+      )}
+    </div>
   );
 };
 
