@@ -47,9 +47,7 @@ const AppCard = ({ jobObj, onEdit, onDelete, onStatusChange, dragHandle }) => {
   };
 
   const formatSalary = (salary) => {
-    if (!salary) return "Not specified";
-    const num = parseInt(salary);
-    return num >= 1000 ? `$${(num / 1000).toFixed(0)}k` : `$${num}`;
+    return `£${salary.toLocaleString()}`;
   };
 
   const formatDate = (date) => {

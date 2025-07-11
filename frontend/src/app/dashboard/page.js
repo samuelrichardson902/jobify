@@ -229,9 +229,11 @@ const Dashboard = () => {
       new Date(app.apply_by) <= oneWeekFromNow
   );
   const rejectedApps = applications.filter((app) => app.status === "rejected");
+  const offerApps = applications.filter((app) => app.status === "offer");
   const otherApps = applications.filter(
     (app) =>
       app.status !== "rejected" &&
+      app.status !== "offer" &&
       !(
         app.status === "pending" &&
         app.apply_by &&
@@ -247,10 +249,14 @@ const Dashboard = () => {
           <div className="min-h-screen bg-base-100 p-4 pt-20">
             <div className="max-w-6xl mx-auto">
               {/* User Info Section */}
-              <div className="flex justify-center mb-8">
-                <div className="max-w-md w-full space-y-6 bg-base-200 p-8 rounded-xl shadow-lg text-center">
+              <div className="flex justify-left mb-8">
+                <div className=" w-full space-y-6 bg-base-200 p-8 rounded-xl shadow-lg text-left">
                   <h1 className="text-3xl font-bold text-base-content">
-                    Welcome to your Dashboard!
+                    {user.user_metadata.full_name
+                      ? `${
+                          user.user_metadata.full_name.split(" ")[0]
+                        }'s Dashboard`
+                      : "Welcome to your Dashboard!"}
                   </h1>
                   <div className="space-y-4">
                     <div>
@@ -258,29 +264,9 @@ const Dashboard = () => {
                         You are logged in as:
                       </p>
                       <p className="font-semibold text-primary break-words">
-                        {user.email || "No Email (Social Login)"}
+                        {user.email || "No Email"}
                       </p>
                     </div>
-
-                    {user.user_metadata?.full_name && (
-                      <div>
-                        <p className="text-base-content/70 mb-1">Name:</p>
-                        <p className="font-medium text-base-content">
-                          {user.user_metadata.full_name}
-                        </p>
-                      </div>
-                    )}
-
-                    {user.id && (
-                      <div className="pt-2 border-t border-base-300">
-                        <p className="text-sm text-base-content/50">
-                          User ID:{" "}
-                          <span className="font-mono text-xs break-all">
-                            {user.id}
-                          </span>
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -395,6 +381,7 @@ const Dashboard = () => {
                   <ApplicationsDisplay
                     urgentApps={urgentApps}
                     rejectedApps={rejectedApps}
+                    offerApps={offerApps}
                     otherApps={otherApps}
                     setApplications={setApplications}
                     onEdit={handleEditJob}

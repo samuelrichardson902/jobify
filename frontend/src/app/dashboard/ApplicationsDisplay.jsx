@@ -172,6 +172,7 @@ const ApplicationsDisplay = ({
   urgentApps = [],
   rejectedApps = [],
   otherApps = [],
+  offerApps = [],
   setApplications,
   onEdit,
   onDelete,
@@ -182,6 +183,7 @@ const ApplicationsDisplay = ({
   const [urgent, setUrgent] = useState(urgentApps);
   const [rejected, setRejected] = useState(rejectedApps);
   const [other, setOther] = useState(otherApps);
+  const [offer, setOffer] = useState(offerApps);
 
   // Keep local state in sync with props
   useEffect(() => {
@@ -193,6 +195,9 @@ const ApplicationsDisplay = ({
   useEffect(() => {
     setOther(otherApps);
   }, [otherApps]);
+  useEffect(() => {
+    setOffer(offerApps);
+  }, [offerApps]);
 
   return (
     <div>
@@ -211,9 +216,22 @@ const ApplicationsDisplay = ({
       )}
       {other.length > 0 && (
         <Section
-          title="Other Applications"
+          title="Applications"
           jobs={other}
           setJobs={setOther}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onStatusChange={onStatusChange}
+          saveNewOrder={saveNewOrder}
+          view={view}
+          defaultCollapsed={false}
+        />
+      )}
+      {offer.length > 0 && (
+        <Section
+          title="Offers"
+          jobs={offer}
+          setJobs={setOffer}
           onEdit={onEdit}
           onDelete={onDelete}
           onStatusChange={onStatusChange}
