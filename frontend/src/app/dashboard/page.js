@@ -10,6 +10,7 @@ import AppModal from "./AppModal";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import ApplicationsDisplay from "./ApplicationsDisplay";
 import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
 
 const Dashboard = () => {
   const { user } = useSupabaseAuth();
@@ -20,9 +21,13 @@ const Dashboard = () => {
   const modalId = "appModal";
   const confirmModalId = "confirmModal";
   const [view, setView] = useState(() => {
-    // Initialize from cookie, default to "grid"
-    return Cookies.get("dashboard-view") || "grid";
+    // Initialize from cookie, default to "list"
+    return Cookies.get("dashboard-view") || "list";
   });
+  const router = useRouter();
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteAccountError, setDeleteAccountError] = useState("");
 
   // Save view preference to cookie whenever it changes
   useEffect(() => {
@@ -241,33 +246,63 @@ const Dashboard = () => {
       )
   );
 
+  // Account deletion handler
+  const handleDeleteAccount = async () => {
+    setDeletingAccount(true);
+    setDeleteAccountError("");
+    try {
+      // Get the current session and access token
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) throw new Error("Not authenticated");
+      // Call API route to delete user (secure)
+      const res = await fetch("/api/delete-account", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete account");
+      // Sign out user after deletion
+      await supabase.auth.signOut();
+      router.replace("/auth");
+    } catch (err) {
+      setDeleteAccountError(err.message || "Failed to delete account");
+    } finally {
+      setDeletingAccount(false);
+      setShowDeleteAccountModal(false);
+    }
+  };
+
   return (
     <>
       {user && (
         <RequireAuth>
-          <NavBar />
+          <NavBar
+            onDeleteAccountClick={() => setShowDeleteAccountModal(true)}
+          />
           <div className="min-h-screen bg-base-100 p-4 pt-20">
             <div className="max-w-6xl mx-auto">
               {/* User Info Section */}
-              <div className="flex justify-left mb-8">
-                <div className=" w-full space-y-6 bg-base-200 p-8 rounded-xl shadow-lg text-left">
-                  <h1 className="text-3xl font-bold text-base-content">
-                    {user.user_metadata.full_name
-                      ? `${
-                          user.user_metadata.full_name.split(" ")[0]
-                        }'s Dashboard`
-                      : "Welcome to your Dashboard!"}
-                  </h1>
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-base-content/70 mb-2">
-                        You are logged in as:
-                      </p>
-                      <p className="font-semibold text-primary break-words">
-                        {user.email || "No Email"}
-                      </p>
-                    </div>
-                  </div>
+              <div className="flex flex-row items-center justify-between mb-8 bg-base-200 p-8 rounded-xl shadow-lg">
+                <h1 className="text-3xl font-bold text-base-content">
+                  {user.user_metadata.full_name
+                    ? `${
+                        user.user_metadata.full_name.split(" ")[0]
+                      }'s Dashboard`
+                    : "Welcome to your Dashboard!"}
+                </h1>
+                <div className="flex flex-col items-end text-right">
+                  <p className="text-base-content/70 mb-1">
+                    You are logged in as:
+                  </p>
+                  <p className="font-semibold text-primary break-words">
+                    {user.email || "No Email"}
+                  </p>
                 </div>
               </div>
 
@@ -278,6 +313,45 @@ const Dashboard = () => {
                     Your Applications ({applications.length})
                   </h2>
                   <div className="flex items-center gap-4">
+                    <button
+                      className={`btn btn-xs ${
+                        view === "list" ? "btn-primary" : "btn-ghost"
+                      }`}
+                      onClick={() => setView("list")}
+                      aria-label="List view"
+                    >
+                      <svg
+                        width="20"
+                        height="20"
+                        fill="none"
+                        viewBox="0 0 20 20"
+                      >
+                        <rect
+                          x="3"
+                          y="4"
+                          width="14"
+                          height="3"
+                          rx="1"
+                          fill="currentColor"
+                        />
+                        <rect
+                          x="3"
+                          y="9"
+                          width="14"
+                          height="3"
+                          rx="1"
+                          fill="currentColor"
+                        />
+                        <rect
+                          x="3"
+                          y="14"
+                          width="14"
+                          height="3"
+                          rx="1"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </button>
                     <button
                       className={`btn btn-xs ${
                         view === "grid" ? "btn-primary" : "btn-ghost"
@@ -320,45 +394,6 @@ const Dashboard = () => {
                           y="11"
                           width="6"
                           height="6"
-                          rx="1"
-                          fill="currentColor"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      className={`btn btn-xs ${
-                        view === "list" ? "btn-primary" : "btn-ghost"
-                      }`}
-                      onClick={() => setView("list")}
-                      aria-label="List view"
-                    >
-                      <svg
-                        width="20"
-                        height="20"
-                        fill="none"
-                        viewBox="0 0 20 20"
-                      >
-                        <rect
-                          x="3"
-                          y="4"
-                          width="14"
-                          height="3"
-                          rx="1"
-                          fill="currentColor"
-                        />
-                        <rect
-                          x="3"
-                          y="9"
-                          width="14"
-                          height="3"
-                          rx="1"
-                          fill="currentColor"
-                        />
-                        <rect
-                          x="3"
-                          y="14"
-                          width="14"
-                          height="3"
                           rx="1"
                           fill="currentColor"
                         />
@@ -407,6 +442,42 @@ const Dashboard = () => {
             onConfirm={confirmDelete}
             onCancel={cancelDelete}
           />
+          {/* Delete Account Confirmation Modal */}
+          {showDeleteAccountModal && (
+            <dialog open className="modal">
+              <div className="modal-box">
+                <h3 className="font-bold text-lg mb-4 text-error">
+                  Delete Account
+                </h3>
+                <p className="mb-4">
+                  Are you sure you want to delete your account? This action
+                  cannot be undone and all your data will be permanently
+                  removed.
+                </p>
+                {deleteAccountError && (
+                  <div className="alert alert-error mb-2">
+                    <span>{deleteAccountError}</span>
+                  </div>
+                )}
+                <div className="flex justify-end gap-2">
+                  <button
+                    className="btn btn-outline"
+                    onClick={() => setShowDeleteAccountModal(false)}
+                    disabled={deletingAccount}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="btn btn-error"
+                    onClick={handleDeleteAccount}
+                    disabled={deletingAccount}
+                  >
+                    {deletingAccount ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+              </div>
+            </dialog>
+          )}
         </RequireAuth>
       )}
     </>

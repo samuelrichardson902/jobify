@@ -12,7 +12,6 @@ export default function Home() {
     if (loading) {
       return;
     }
-
     if (session) {
       router.replace("/dashboard");
     } else {

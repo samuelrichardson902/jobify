@@ -65,9 +65,8 @@ const AppListCard = ({
   };
 
   const formatSalary = (salary) => {
-    if (!salary) return "Not specified";
-    const num = parseInt(salary);
-    return num >= 1000 ? `$${(num / 1000).toFixed(0)}k` : `$${num}`;
+    if (!salary) return null;
+    return `£${salary.toLocaleString()}`;
   };
 
   const formatDate = (date) => {
@@ -93,93 +92,121 @@ const AppListCard = ({
         <span className="font-semibold text-base-content line-clamp-1 flex-1">
           {job.company || "Company Name"}
         </span>
-        <span className="text-xs text-base-content/60 w-24 truncate">
-          {job.location}
-        </span>
-        <div className="relative" ref={statusRef}>
-          <div
-            className={`badge ${
-              getStatusConfig(job?.status).color
-            } badge-xs cursor-pointer select-none`}
-            onClick={handleStatusClick}
-            tabIndex={0}
-          >
-            {getStatusConfig(job?.status).text}
+        <div className="w-[400px] flex items-center gap-2 min-h-[40px]">
+          {/* Apply by section - conditional width */}
+          <div className="w-32 flex justify-center items-center">
+            {job.status === "pending" && job.apply_by && (
+              <span className="text-xs text-warning font-medium whitespace-nowrap text-center">
+                Apply by: {formatDate(job.apply_by)}
+              </span>
+            )}
           </div>
-          {statusDropdownOpen && (
-            <ul className="absolute right-0 mt-2 w-40 bg-base-100 rounded shadow z-10 border border-base-300">
-              {statusOptions.map((opt) => (
-                <li key={opt.value}>
-                  <button
-                    className={`w-full text-left px-4 py-2 hover:bg-base-200 flex items-center gap-2 ${
-                      job.status === opt.value ? "font-bold" : ""
-                    }`}
-                    onClick={() => handleStatusSelect(opt.value)}
-                  >
-                    <span className={`badge ${opt.color} badge-xs`}></span>
-                    {opt.text}
-                  </button>
-                </li>
-              ))}
-            </ul>
+
+          {/* Location section */}
+          <div className="w-24 flex justify-center items-center">
+            <span className="text-xs text-base-content/60 text-center">
+              {job.location}
+            </span>
+          </div>
+
+          {/* Status section */}
+          <div className="w-24 flex justify-center items-center">
+            <div className="relative" ref={statusRef}>
+              <div
+                className={`badge ${
+                  getStatusConfig(job?.status).color
+                } badge-xs cursor-pointer select-none`}
+                onClick={handleStatusClick}
+                tabIndex={0}
+              >
+                {getStatusConfig(job?.status).text}
+              </div>
+              {statusDropdownOpen && (
+                <ul className="absolute right-0 mt-2 w-40 bg-base-100 rounded shadow z-10 border border-base-300">
+                  {statusOptions.map((opt) => (
+                    <li key={opt.value}>
+                      <button
+                        className={`w-full text-left px-4 py-2 hover:bg-base-200 flex items-center gap-2 ${
+                          job.status === opt.value ? "font-bold" : ""
+                        }`}
+                        onClick={() => handleStatusSelect(opt.value)}
+                      >
+                        <span className={`badge ${opt.color} badge-xs`}></span>
+                        {opt.text}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
+          {/* Salary section */}
+          <div className="w-24 flex justify-center items-center">
+            <span className="text-xs text-base-content/60 text-center">
+              {formatSalary(job.salary)}
+            </span>
+          </div>
+
+          {/* Drag handle section */}
+          {dragHandle && (
+            <div className="w-8 flex justify-center items-center">
+              <div className="relative z-10">{dragHandle}</div>
+            </div>
           )}
         </div>
-        <span className="text-xs text-base-content/60 w-20 text-right">
-          {formatSalary(job.salary)}
-        </span>
-        {dragHandle && <div className="relative z-10">{dragHandle}</div>}
       </div>
       {isExpanded && (
-        <div className="mt-2 pl-2 border-l border-base-300 text-sm text-base-content/80">
+        <div className="mt-2 pl-2 border-l border-base-300 text-sm text-base-content/80 flex flex-col min-h-[60px]">
           {job.notes && (
             <div className="mb-1">
               <span className="font-medium">Notes:</span> {job.notes}
             </div>
           )}
-          {job.apply_by && (
-            <div className="mb-1">
-              <span className="font-medium">Apply by:</span>{" "}
-              {formatDate(job.apply_by)}
-            </div>
-          )}
-          {job.created_at && (
-            <div className="mb-1">
-              <span className="font-medium">Created:</span>{" "}
-              <span className="text-success">{formatDate(job.created_at)}</span>
-            </div>
-          )}
-          {job.link && (
-            <div className="mb-1">
-              <a
-                href={job.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary underline"
+          <div className="flex flex-row items-end justify-end mt-auto gap-4 flex-wrap w-full">
+            {job.created_at && (
+              <div>
+                <span className="font-medium">Created:</span>{" "}
+                <span className="text-success">
+                  {formatDate(job.created_at)}
+                </span>
+              </div>
+            )}
+            {job.link && (
+              <div>
+                <a
+                  href={job.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline"
+                >
+                  View Job
+                </a>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <button
+                className="btn btn-ghost btn-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(job.id);
+                }}
+                aria-label="Edit"
               >
-                View Job
-              </a>
+                ✏️
+              </button>
+              <button
+                className="btn btn-ghost btn-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(job.id);
+                }}
+                aria-label="Delete"
+              >
+                🗑️
+              </button>
             </div>
-          )}
-          <button
-            className="btn btn-ghost btn-xs"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(job.id);
-            }}
-            aria-label="Edit"
-          >
-            ✏️
-          </button>
-          <button
-            className="btn btn-ghost btn-xs"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(job.id);
-            }}
-            aria-label="Delete"
-          >
-            🗑️
-          </button>
+          </div>
         </div>
       )}
     </div>

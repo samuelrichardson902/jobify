@@ -75,8 +75,8 @@ const AppCard = ({ jobObj, onEdit, onDelete, onStatusChange, dragHandle }) => {
   const isPending = jobObj?.status === "pending";
 
   return (
-    <div className="card bg-base-200 shadow-md hover:shadow-lg transition-shadow duration-200 relative">
-      <div className="card-body p-6">
+    <div className="card bg-base-200 shadow-md hover:shadow-lg transition-shadow duration-200 relative h-72 flex flex-col">
+      <div className="card-body p-6 flex-1 flex flex-col justify-between">
         {/* Header */}
         <div className="flex justify-between items-start mb-4">
           <div className="flex-1">
@@ -127,25 +127,26 @@ const AppCard = ({ jobObj, onEdit, onDelete, onStatusChange, dragHandle }) => {
           </div>
         )}
 
-        {/* Apply By Date */}
-        {isPending && jobObj?.apply_by && (
-          <div className="mb-3">
-            <span className="text-xs text-base-content/60">Apply by: </span>
-            <span className="text-sm font-medium text-warning">
-              {formatDate(jobObj.apply_by)}
-            </span>
-          </div>
-        )}
-
-        {/* Applied Date */}
-        {jobObj?.created_at && (
-          <div className="mb-3">
-            <span className="text-xs text-base-content/60">Created: </span>
-            <span className="text-sm font-medium text-success">
-              {formatDate(jobObj.created_at)}
-            </span>
-          </div>
-        )}
+        <div className="flex justify-between">
+          {/* Created Date */}
+          {jobObj?.created_at && (
+            <div className="mb-3">
+              <span className="text-xs text-base-content/60">Created: </span>
+              <span className="text-sm font-medium text-success">
+                {formatDate(jobObj.created_at)}
+              </span>
+            </div>
+          )}
+          {/* Apply By Date */}
+          {isPending && jobObj?.apply_by && (
+            <div className="mb-3">
+              <span className="text-xs text-base-content/60">Apply by: </span>
+              <span className="text-sm font-medium text-warning">
+                {formatDate(jobObj.apply_by)}
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Notes Preview */}
         {jobObj?.notes && (

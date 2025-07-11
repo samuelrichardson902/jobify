@@ -6,7 +6,7 @@ import AuthCard from "./AuthCard";
 import AuthTabs from "./AuthTabs";
 import AuthInput from "./AuthInput";
 import AuthButton from "./AuthButton";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const Auth = () => {
   useEffect(() => {
@@ -59,10 +59,7 @@ const Auth = () => {
       />
 
       <div className="relative z-10 min-h-screen flex items-center justify-center px-2">
-        <AuthCard
-          title="Jobify"
-          headline="Keep Track of all your Job Applications in One Place"
-        >
+        <AuthCard headline="Keep Track of all your Job Applications in One Place">
           <AuthTabs tab={tab} handleTabChange={handleTabChange} />
 
           <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
@@ -98,7 +95,6 @@ const Auth = () => {
                 maxLength={128}
               />
             )}
-
             {message && (
               <div
                 className={`alert mb-4 ${
@@ -112,7 +108,6 @@ const Auth = () => {
                 <span>{message}</span>
               </div>
             )}
-
             <div className="form-control">
               {tab === "login" ? (
                 <AuthButton
@@ -133,8 +128,7 @@ const Auth = () => {
               )}
             </div>
           </form>
-
-          <div className="divider">OR</div>
+          <div className="divider mt-2">OR</div>
 
           <div className="flex justify-center mt-2">
             <div id="googleSignInButton"></div>
