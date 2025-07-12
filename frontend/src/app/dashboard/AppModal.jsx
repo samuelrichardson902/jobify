@@ -3,6 +3,7 @@ import InputField from "@/components/formComponents/InputField";
 import TextAreaField from "@/components/formComponents/TextAreaField";
 import DateField from "@/components/formComponents/DateField";
 import AutoFillButton from "@/components/formComponents/AutoFillButton";
+import { supabase } from "@/lib/supabase";
 
 const AppModal = ({ modalId, onSaveJob, setAppToEdit, appToEdit }) => {
   const [applyBy, setApplyBy] = useState(null);
@@ -118,11 +119,36 @@ const AppModal = ({ modalId, onSaveJob, setAppToEdit, appToEdit }) => {
 
     setIsAutoFilling(true);
     try {
+      // Get the current session and access token
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        setLinkError("Please log in to use auto-fill feature");
+        return;
+      }
+
       const res = await fetch("/api/scrape-job", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({ url: link }),
       });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        if (res.status === 429) {
+          setLinkError("Rate limit exceeded. Please try again later.");
+        } else if (res.status === 401) {
+          setLinkError("Authentication required. Please log in again.");
+        } else {
+          setLinkError(errorData.error || "Failed to auto-fill job data");
+        }
+        return;
+      }
 
       const jobData = (await res.json()).data;
       console.log(jobData);
@@ -131,7 +157,8 @@ const AppModal = ({ modalId, onSaveJob, setAppToEdit, appToEdit }) => {
       if (jobData.salary) setSalary(jobData.salary);
       if (jobData.notes) setNotes(jobData.notes);
       if (jobData.applyBy) setApplyBy(jobData.applyBy);
-    } catch {
+    } catch (error) {
+      console.error("Auto-fill error:", error);
       setLinkError("Failed to auto-fill job data. Please fill manually.");
     } finally {
       setIsAutoFilling(false);

@@ -10,7 +10,6 @@ import AppModal from "./AppModal";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import ApplicationsDisplay from "./ApplicationsDisplay";
 import Cookies from "js-cookie";
-import { useRouter } from "next/navigation";
 
 const Dashboard = () => {
   const { user } = useSupabaseAuth();
@@ -24,10 +23,6 @@ const Dashboard = () => {
     // Initialize from cookie, default to "list"
     return Cookies.get("dashboard-view") || "list";
   });
-  const router = useRouter();
-  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
-  const [deletingAccount, setDeletingAccount] = useState(false);
-  const [deleteAccountError, setDeleteAccountError] = useState("");
 
   // Save view preference to cookie whenever it changes
   useEffect(() => {
@@ -246,45 +241,11 @@ const Dashboard = () => {
       )
   );
 
-  // Account deletion handler
-  const handleDeleteAccount = async () => {
-    setDeletingAccount(true);
-    setDeleteAccountError("");
-    try {
-      // Get the current session and access token
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const accessToken = session?.access_token;
-      if (!accessToken) throw new Error("Not authenticated");
-      // Call API route to delete user (secure)
-      const res = await fetch("/api/delete-account", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to delete account");
-      // Sign out user after deletion
-      await supabase.auth.signOut();
-      router.replace("/auth");
-    } catch (err) {
-      setDeleteAccountError(err.message || "Failed to delete account");
-    } finally {
-      setDeletingAccount(false);
-      setShowDeleteAccountModal(false);
-    }
-  };
-
   return (
     <>
       {user && (
         <RequireAuth>
-          <NavBar
-            onDeleteAccountClick={() => setShowDeleteAccountModal(true)}
-          />
+          <NavBar />
           <div className="min-h-screen bg-base-100 p-4 pt-20">
             <div className="max-w-6xl mx-auto">
               {/* User Info Section */}
@@ -442,42 +403,6 @@ const Dashboard = () => {
             onConfirm={confirmDelete}
             onCancel={cancelDelete}
           />
-          {/* Delete Account Confirmation Modal */}
-          {showDeleteAccountModal && (
-            <dialog open className="modal">
-              <div className="modal-box">
-                <h3 className="font-bold text-lg mb-4 text-error">
-                  Delete Account
-                </h3>
-                <p className="mb-4">
-                  Are you sure you want to delete your account? This action
-                  cannot be undone and all your data will be permanently
-                  removed.
-                </p>
-                {deleteAccountError && (
-                  <div className="alert alert-error mb-2">
-                    <span>{deleteAccountError}</span>
-                  </div>
-                )}
-                <div className="flex justify-end gap-2">
-                  <button
-                    className="btn btn-outline"
-                    onClick={() => setShowDeleteAccountModal(false)}
-                    disabled={deletingAccount}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="btn btn-error"
-                    onClick={handleDeleteAccount}
-                    disabled={deletingAccount}
-                  >
-                    {deletingAccount ? "Deleting..." : "Delete"}
-                  </button>
-                </div>
-              </div>
-            </dialog>
-          )}
         </RequireAuth>
       )}
     </>

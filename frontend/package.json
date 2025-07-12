@@ -19,6 +19,7 @@
     "autoprefixer": "^10.4.21",
     "axios": "^1.10.0",
     "cally": "^0.8.0",
+    "chart.js": "^4.5.0",
     "daisyui": "^5.0.43",
     "dnd-kit": "^0.0.2",
     "js-cookie": "^3.0.5",
@@ -27,6 +28,7 @@
     "next-auth": "^4.24.11",
     "postcss": "^8.5.6",
     "react": "^19.0.0",
+    "react-chartjs-2": "^5.3.0",
     "react-datepicker": "^8.4.0",
     "react-dom": "^19.0.0",
     "tailwindcss": "^4.1.10"

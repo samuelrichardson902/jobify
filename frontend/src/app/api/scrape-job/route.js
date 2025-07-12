@@ -1,12 +1,54 @@
 import axios from "axios";
 import { JSDOM } from "jsdom";
 import { GoogleGenAI } from "@google/genai";
+import { createClient } from "@supabase/supabase-js";
+import { rateLimit } from "@/lib/rateLimit";
 
 // Initialize with API key
 const ai = new GoogleGenAI({});
 
+// Initialize Supabase admin client for authentication
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
 export async function POST(request) {
   try {
+    // Authentication check
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const accessToken = authHeader.replace("Bearer ", "");
+
+    // Validate the token and get the user
+    const {
+      data: { user },
+      error,
+    } = await supabaseAdmin.auth.getUser(accessToken);
+    if (error || !user) {
+      return Response.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    // Rate limiting check (10 requests per minute per user)
+    const rateLimitResult = rateLimit(user.id, 10, 60000);
+    if (!rateLimitResult.allowed) {
+      return Response.json(
+        {
+          error: "Rate limit exceeded. Please try again later.",
+          resetTime: rateLimitResult.resetTime,
+        },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
+            "X-RateLimit-Reset": rateLimitResult.resetTime.toString(),
+          },
+        }
+      );
+    }
+
     const { url } = await request.json();
     if (!url) {
       return Response.json({ error: "Missing URL" }, { status: 400 });
@@ -83,7 +125,15 @@ Return only the JSON object, no other text.
       throw new Error("Could not extract job data from the provided URL");
     }
 
-    return Response.json({ success: true, data: jobData });
+    return Response.json(
+      { success: true, data: jobData },
+      {
+        headers: {
+          "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
+          "X-RateLimit-Reset": rateLimitResult.resetTime.toString(),
+        },
+      }
+    );
   } catch (err) {
     console.error("Job extraction error:", err);
 
