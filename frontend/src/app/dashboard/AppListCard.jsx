@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { addToCalendar } from "@/lib/calendarUtils";
 
 const statusColors = {
   pending: "badge-warning",
@@ -92,13 +93,42 @@ const AppListCard = ({
         <span className="font-semibold text-base-content line-clamp-1 flex-1">
           {job.company || "Company Name"}
         </span>
-        <div className="w-[400px] flex items-center gap-2 min-h-[40px]">
+        <div className="w-[450px] flex items-center gap-2 min-h-[40px]">
           {/* Deadline section - conditional width */}
           <div className="w-32 flex justify-center items-center">
             {job.status === "pending" && job.deadline && (
-              <span className="text-xs text-warning font-medium whitespace-nowrap text-center">
-                Deadline: {formatDate(job.deadline)}
-              </span>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-warning font-medium whitespace-nowrap text-center">
+                  Deadline: {formatDate(job.deadline)}
+                </span>
+                <button
+                  className="btn btn-ghost btn-xs text-base-content/60 hover:text-warning transition-colors duration-200"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const calendarUrl = addToCalendar(
+                      job.company || "Company",
+                      job.deadline,
+                      job.notes
+                    );
+                    window.open(calendarUrl, "_blank");
+                  }}
+                  title="Add to Calendar"
+                >
+                  <svg
+                    className="w-3 h-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </button>
+              </div>
             )}
           </div>
 

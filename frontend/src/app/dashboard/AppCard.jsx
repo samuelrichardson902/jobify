@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { addToCalendar } from "@/lib/calendarUtils";
 
 const AppCard = ({ jobObj, onEdit, onDelete, onStatusChange, dragHandle }) => {
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
@@ -140,10 +141,38 @@ const AppCard = ({ jobObj, onEdit, onDelete, onStatusChange, dragHandle }) => {
           {/* Deadline */}
           {isPending && jobObj?.deadline && (
             <div className="mb-3">
-              <span className="text-xs text-base-content/60">Deadline: </span>
-              <span className="text-sm font-medium text-warning">
-                {formatDate(jobObj.deadline)}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-base-content/60">Deadline: </span>
+                <span className="text-sm font-medium text-warning">
+                  {formatDate(jobObj.deadline)}
+                </span>
+                <button
+                  onClick={() => {
+                    const calendarUrl = addToCalendar(
+                      jobObj.company || "Company",
+                      jobObj.deadline,
+                      jobObj.notes
+                    );
+                    window.open(calendarUrl, "_blank");
+                  }}
+                  className="btn btn-ghost btn-xs text-base-content/60 hover:text-success-focus"
+                  title="Add to Calendar"
+                >
+                  <svg
+                    className="w-3 h-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
           )}
         </div>
