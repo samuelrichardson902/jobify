@@ -6,7 +6,7 @@ import AutoFillButton from "@/components/formComponents/AutoFillButton";
 import { supabase } from "@/lib/supabase";
 
 const AppModal = ({ modalId, onSaveJob, setAppToEdit, appToEdit }) => {
-  const [applyBy, setApplyBy] = useState(null);
+  const [deadline, setDeadline] = useState(null);
   const [link, setLink] = useState("");
   const [company, setCompany] = useState("");
   const [location, setLocation] = useState("");
@@ -21,7 +21,7 @@ const AppModal = ({ modalId, onSaveJob, setAppToEdit, appToEdit }) => {
   const statusRef = useRef(null);
 
   const statusOptions = [
-    { value: "pending", color: "badge-warning", text: "Need to Apply" },
+    { value: "pending", color: "badge-warning", text: "Pending" },
     { value: "applied", color: "badge-info", text: "Applied" },
     { value: "interviewing", color: "badge-primary", text: "Interviewing" },
     { value: "offer", color: "badge-success", text: "Offer" },
@@ -50,7 +50,7 @@ const AppModal = ({ modalId, onSaveJob, setAppToEdit, appToEdit }) => {
   useEffect(() => {
     if (appToEdit) {
       // Populate form with existing data for editing
-      setApplyBy(appToEdit.apply_by ? new Date(appToEdit.apply_by) : null);
+      setDeadline(appToEdit.deadline ? new Date(appToEdit.deadline) : null);
       setLink(appToEdit.link || "");
       setCompany(appToEdit.company || "");
       setLocation(appToEdit.location || "");
@@ -75,7 +75,7 @@ const AppModal = ({ modalId, onSaveJob, setAppToEdit, appToEdit }) => {
   }, [modalId, appToEdit]);
 
   const resetForm = () => {
-    setApplyBy(null);
+    setDeadline(null);
     setLink("");
     setCompany("");
     setLocation("");
@@ -98,7 +98,7 @@ const AppModal = ({ modalId, onSaveJob, setAppToEdit, appToEdit }) => {
   const handleStatusSelect = (newStatus) => {
     setStatusDropdownOpen(false);
     setStatus(newStatus);
-    setApplyBy(null);
+    setDeadline(null);
   };
 
   const getStatusConfig = (status) => {
@@ -156,7 +156,7 @@ const AppModal = ({ modalId, onSaveJob, setAppToEdit, appToEdit }) => {
       if (jobData.location) setLocation(jobData.location);
       if (jobData.salary) setSalary(jobData.salary);
       if (jobData.notes) setNotes(jobData.notes);
-      if (jobData.applyBy) setApplyBy(jobData.applyBy);
+      if (jobData.deadline) setDeadline(jobData.deadline);
     } catch (error) {
       console.error("Auto-fill error:", error);
       setLinkError("Failed to auto-fill job data. Please fill manually.");
@@ -179,7 +179,7 @@ const AppModal = ({ modalId, onSaveJob, setAppToEdit, appToEdit }) => {
 
     try {
       const jobData = {
-        applyBy,
+        deadline,
         link,
         company,
         location,
@@ -301,10 +301,10 @@ const AppModal = ({ modalId, onSaveJob, setAppToEdit, appToEdit }) => {
 
           {status === "pending" && (
             <DateField
-              label="Apply By Date"
-              helper="Set a deadline reminder"
-              selected={applyBy}
-              onChange={setApplyBy}
+              label="Deadline"
+              helper="Set a deadline reminder (application, assessment, etc.)"
+              selected={deadline}
+              onChange={setDeadline}
             />
           )}
           <div className="flex justify-end gap-3 pt-4">

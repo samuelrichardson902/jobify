@@ -85,7 +85,7 @@ export async function POST(request) {
             notes: data.description
               ? stripHtml(data.description).slice(0, 300)
               : null,
-            applyBy: data.validThrough || null,
+            deadline: data.validThrough || null,
           };
           break;
         }
@@ -105,7 +105,7 @@ export async function POST(request) {
         .slice(0, 10000);
       const prompt = `
 Extract job information from this text and return ONLY a valid JSON object with these exact keys:
-{ "company": string|null, "location": string|null, "salary": string|null, "notes": string|null, "applyBy": string|null }
+{ "company": string|null, "location": string|null, "salary": string|null, "notes": string|null, "deadline": string|null }
 
 Job posting text:
 """${plainText}"""
@@ -198,7 +198,7 @@ function safeParseJSON(text) {
         location: parsed.location || null,
         salary: parsed.salary || null,
         notes: parsed.notes || null,
-        applyBy: parsed.applyBy || null,
+        deadline: parsed.deadline || null,
       };
     }
 

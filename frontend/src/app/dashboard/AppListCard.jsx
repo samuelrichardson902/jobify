@@ -23,7 +23,7 @@ const AppListCard = ({
   const isExpanded = expandedId === job.id;
 
   const statusOptions = [
-    { value: "pending", color: "badge-warning", text: "Need to Apply" },
+    { value: "pending", color: "badge-warning", text: "Pending" },
     { value: "applied", color: "badge-info", text: "Applied" },
     { value: "interviewing", color: "badge-primary", text: "Interviewing" },
     { value: "offer", color: "badge-success", text: "Offer" },
@@ -93,11 +93,11 @@ const AppListCard = ({
           {job.company || "Company Name"}
         </span>
         <div className="w-[400px] flex items-center gap-2 min-h-[40px]">
-          {/* Apply by section - conditional width */}
+          {/* Deadline section - conditional width */}
           <div className="w-32 flex justify-center items-center">
-            {job.status === "pending" && job.apply_by && (
+            {job.status === "pending" && job.deadline && (
               <span className="text-xs text-warning font-medium whitespace-nowrap text-center">
-                Apply by: {formatDate(job.apply_by)}
+                Deadline: {formatDate(job.deadline)}
               </span>
             )}
           </div>

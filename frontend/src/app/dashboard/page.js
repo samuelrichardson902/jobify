@@ -70,7 +70,7 @@ const Dashboard = () => {
       const appData = {
         user_id: user.id,
         status: jobData.status,
-        apply_by: jobData.status === "pending" ? jobData.applyBy : null,
+        deadline: jobData.status === "pending" ? jobData.deadline : null,
         link: jobData.link.trim() || null,
         company: jobData.company.trim() || null,
         location: jobData.location.trim() || null,
@@ -101,7 +101,7 @@ const Dashboard = () => {
       const appData = {
         user_id: user.id,
         status: jobData.status,
-        apply_by: jobData.status === "pending" ? jobData.applyBy : null,
+        deadline: jobData.status === "pending" ? jobData.deadline : null,
         link: jobData.link.trim() || null,
         company: jobData.company.trim() || null,
         location: jobData.location.trim() || null,
@@ -225,8 +225,8 @@ const Dashboard = () => {
   const urgentApps = applications.filter(
     (app) =>
       app.status === "pending" &&
-      app.apply_by &&
-      new Date(app.apply_by) <= oneWeekFromNow
+      app.deadline &&
+      new Date(app.deadline) <= oneWeekFromNow
   );
   const rejectedApps = applications.filter((app) => app.status === "rejected");
   const offerApps = applications.filter((app) => app.status === "offer");
@@ -236,8 +236,8 @@ const Dashboard = () => {
       app.status !== "offer" &&
       !(
         app.status === "pending" &&
-        app.apply_by &&
-        new Date(app.apply_by) <= oneWeekFromNow
+        app.deadline &&
+        new Date(app.deadline) <= oneWeekFromNow
       )
   );
 

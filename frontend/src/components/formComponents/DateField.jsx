@@ -12,7 +12,7 @@ const DateField = ({ label, helper, selected, onChange }) => (
         selected={selected}
         onChange={onChange}
         className="input input-bordered w-full focus:input-primary bg-base-100 text-base-content pr-10"
-        placeholderText="Select application deadline"
+        placeholderText="Select deadline"
         dateFormat="MMM dd, yyyy"
         minDate={new Date()}
         showPopperArrow={false}

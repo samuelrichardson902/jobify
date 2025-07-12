@@ -3,7 +3,7 @@ export const STATUS_CONFIG = {
   pending: {
     value: "pending",
     color: "badge-warning",
-    text: "Need to Apply",
+    text: "Pending",
     chartColor: "#fbbf24", // amber-400
     backgroundColor: "rgba(251, 191, 36, 0.8)",
     borderColor: "#fbbf24",

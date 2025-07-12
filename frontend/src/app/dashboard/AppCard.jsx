@@ -5,7 +5,7 @@ const AppCard = ({ jobObj, onEdit, onDelete, onStatusChange, dragHandle }) => {
   const statusRef = useRef(null);
 
   const statusOptions = [
-    { value: "pending", color: "badge-warning", text: "Need to Apply" },
+    { value: "pending", color: "badge-warning", text: "Pending" },
     { value: "applied", color: "badge-info", text: "Applied" },
     { value: "interviewing", color: "badge-primary", text: "Interviewing" },
     { value: "offer", color: "badge-success", text: "Offer" },
@@ -137,12 +137,12 @@ const AppCard = ({ jobObj, onEdit, onDelete, onStatusChange, dragHandle }) => {
               </span>
             </div>
           )}
-          {/* Apply By Date */}
-          {isPending && jobObj?.apply_by && (
+          {/* Deadline */}
+          {isPending && jobObj?.deadline && (
             <div className="mb-3">
-              <span className="text-xs text-base-content/60">Apply by: </span>
+              <span className="text-xs text-base-content/60">Deadline: </span>
               <span className="text-sm font-medium text-warning">
-                {formatDate(jobObj.apply_by)}
+                {formatDate(jobObj.deadline)}
               </span>
             </div>
           )}
