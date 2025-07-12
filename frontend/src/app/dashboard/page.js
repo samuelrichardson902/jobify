@@ -276,45 +276,6 @@ const Dashboard = () => {
                   <div className="flex items-center gap-4">
                     <button
                       className={`btn btn-xs ${
-                        view === "list" ? "btn-primary" : "btn-ghost"
-                      }`}
-                      onClick={() => setView("list")}
-                      aria-label="List view"
-                    >
-                      <svg
-                        width="20"
-                        height="20"
-                        fill="none"
-                        viewBox="0 0 20 20"
-                      >
-                        <rect
-                          x="3"
-                          y="4"
-                          width="14"
-                          height="3"
-                          rx="1"
-                          fill="currentColor"
-                        />
-                        <rect
-                          x="3"
-                          y="9"
-                          width="14"
-                          height="3"
-                          rx="1"
-                          fill="currentColor"
-                        />
-                        <rect
-                          x="3"
-                          y="14"
-                          width="14"
-                          height="3"
-                          rx="1"
-                          fill="currentColor"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      className={`btn btn-xs ${
                         view === "grid" ? "btn-primary" : "btn-ghost"
                       }`}
                       onClick={() => setView("grid")}
@@ -355,6 +316,45 @@ const Dashboard = () => {
                           y="11"
                           width="6"
                           height="6"
+                          rx="1"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      className={`btn btn-xs ${
+                        view === "list" ? "btn-primary" : "btn-ghost"
+                      }`}
+                      onClick={() => setView("list")}
+                      aria-label="List view"
+                    >
+                      <svg
+                        width="20"
+                        height="20"
+                        fill="none"
+                        viewBox="0 0 20 20"
+                      >
+                        <rect
+                          x="3"
+                          y="4"
+                          width="14"
+                          height="3"
+                          rx="1"
+                          fill="currentColor"
+                        />
+                        <rect
+                          x="3"
+                          y="9"
+                          width="14"
+                          height="3"
+                          rx="1"
+                          fill="currentColor"
+                        />
+                        <rect
+                          x="3"
+                          y="14"
+                          width="14"
+                          height="3"
                           rx="1"
                           fill="currentColor"
                         />
