@@ -11,7 +11,7 @@ Welcome to the **Jobify** project! This open-source web app helps job seekers or
 
 - 📋 **Centralized Tracking**: Log and manage all your job applications in one simple dashboard.
 - 🤖 **AI Autofill**: Paste a job posting URL and let the Gemini API autofill company, location, salary, and other key fields automatically.
-- 📊 **Analytics (Coming Soon)**: Get insights into your applications, track offers, interviews, and more.
+- 📊 **Analytics**: Get insights into your applications, track offers, interviews, and more.
 - 🔐 **Secure Auth**: Login with Google via Supabase for a secure and personalized experience.
 - 🎯 **Clean UI**: Built with DaisyUI and TailwindCSS for a fast, accessible interface.
 
