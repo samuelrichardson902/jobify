@@ -1,5 +1,6 @@
 import "./globals.css";
 import { SupabaseAuthProvider } from "../components/SupabaseAuthProvider";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata = {
   title: "Jobify",
@@ -21,6 +22,7 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <SupabaseAuthProvider>{children}</SupabaseAuthProvider>
+        <Analytics />
       </body>
     </html>
   );
