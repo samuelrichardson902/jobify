@@ -1,13 +1,10 @@
-import axios from "axios";
 import { JSDOM } from "jsdom";
 import { GoogleGenAI } from "@google/genai";
 import { createClient } from "@supabase/supabase-js";
 import { rateLimit } from "@/lib/rateLimit";
 
-// Initialize with API key
 const ai = new GoogleGenAI({});
 
-// Initialize Supabase admin client for authentication
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -22,7 +19,6 @@ export async function POST(request) {
     }
     const accessToken = authHeader.replace("Bearer ", "");
 
-    // Validate the token and get the user
     const {
       data: { user },
       error,
@@ -31,7 +27,7 @@ export async function POST(request) {
       return Response.json({ error: "Invalid token" }, { status: 401 });
     }
 
-    // Rate limiting check (10 requests per minute per user)
+    // Rate limiting
     const rateLimitResult = rateLimit(user.id, 10, 60000);
     if (!rateLimitResult.allowed) {
       return Response.json(
@@ -54,15 +50,26 @@ export async function POST(request) {
       return Response.json({ error: "Missing URL" }, { status: 400 });
     }
 
-    const response = await axios.get(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-      },
-      timeout: 10000,
-    });
+    // Fetch rendered HTML using Browserless
+    const browserlessResponse = await fetch(
+      `https://chrome.browserless.io/content?token=${process.env.BROWSERLESS_TOKEN}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: url,
+          waitFor: 2000, // Wait 2 seconds for dynamic content
+        }),
+        timeout: 30000,
+      }
+    );
 
-    const dom = new JSDOM(response.data);
+    if (!browserlessResponse.ok) {
+      throw new Error(`Browserless error: ${browserlessResponse.status}`);
+    }
+
+    const html = await browserlessResponse.text();
+    const dom = new JSDOM(html);
     const document = dom.window.document;
 
     // Step 1: Try extracting structured data (JSON-LD)
@@ -102,7 +109,9 @@ export async function POST(request) {
 
       const plainText = document.body.textContent
         .replace(/\s+/g, " ")
+        .trim()
         .slice(0, 10000);
+
       const prompt = `
 Extract job information from this text and return ONLY a valid JSON object with these exact keys:
 { "company": string|null, "location": string|null, "salary": string|null, "notes": string|null, "deadline": string|null }
@@ -144,7 +153,10 @@ Return only the JSON object, no other text.
       );
     }
 
-    if (err.message.includes("API key")) {
+    if (
+      err.message.includes("API key") ||
+      err.message.includes("Browserless")
+    ) {
       return Response.json(
         { error: "API configuration error" },
         { status: 500 }
@@ -158,13 +170,11 @@ Return only the JSON object, no other text.
   }
 }
 
-// Utility: Remove HTML tags safely
 function stripHtml(html) {
   if (typeof html !== "string") return "";
   return html.replace(/<\/?[^>]+(>|$)/g, "").trim();
 }
 
-// Utility: Extract salary information
 function extractSalary(baseSalary) {
   if (!baseSalary) return null;
 
@@ -181,17 +191,13 @@ function extractSalary(baseSalary) {
   return null;
 }
 
-// Utility: Parse JSON safely (NO eval!)
 function safeParseJSON(text) {
   try {
-    // Try to find JSON object in the response
     const jsonMatch = text.match(/\{[\s\S]*?\}/);
     if (!jsonMatch) return null;
 
-    // Use JSON.parse instead of eval for security
     const parsed = JSON.parse(jsonMatch[0]);
 
-    // Validate the structure
     if (typeof parsed === "object" && parsed !== null) {
       return {
         company: parsed.company || null,
