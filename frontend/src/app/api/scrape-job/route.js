@@ -3,8 +3,10 @@ import { GoogleGenAI } from "@google/genai";
 import { createClient } from "@supabase/supabase-js";
 import { rateLimit } from "@/lib/rateLimit";
 
+// Initialize with API key
 const ai = new GoogleGenAI({});
 
+// Initialize Supabase admin client for authentication
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -19,6 +21,7 @@ export async function POST(request) {
     }
     const accessToken = authHeader.replace("Bearer ", "");
 
+    // Validate the token and get the user
     const {
       data: { user },
       error,
@@ -27,7 +30,7 @@ export async function POST(request) {
       return Response.json({ error: "Invalid token" }, { status: 401 });
     }
 
-    // Rate limiting
+    // Rate limiting check (10 requests per minute per user)
     const rateLimitResult = rateLimit(user.id, 10, 60000);
     if (!rateLimitResult.allowed) {
       return Response.json(
@@ -45,22 +48,39 @@ export async function POST(request) {
       );
     }
 
-    const { url } = await request.json();
+    let { url } = await request.json();
     if (!url) {
       return Response.json({ error: "Missing URL" }, { status: 400 });
     }
 
+    // Check if it's a gradcracker redirect URL and extract the final destination
+    if (url.includes("gradcracker.com/out")) {
+      try {
+        const urlObj = new URL(url);
+        const finalUrl = urlObj.searchParams.get("u");
+        if (finalUrl) {
+          url = decodeURIComponent(finalUrl);
+          console.log(`Extracted final URL from gradcracker: ${url}`);
+        }
+      } catch (e) {
+        console.warn(
+          "Could not extract redirect URL, proceeding with original"
+        );
+      }
+    }
+
     // Fetch rendered HTML using Browserless
     const browserlessResponse = await fetch(
-      `https://chrome.browserless.io/content?token=${process.env.BROWSERLESS_TOKEN}`,
+      `https://production-sfo.browserless.io/content?token=${process.env.BROWSERLESS_TOKEN}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           url: url,
-          waitFor: 2000, // Wait 2 seconds for dynamic content
+          gotoOptions: {
+            waitUntil: "networkidle2",
+          },
         }),
-        timeout: 30000,
       }
     );
 
@@ -170,11 +190,13 @@ Return only the JSON object, no other text.
   }
 }
 
+// Utility: Remove HTML tags safely
 function stripHtml(html) {
   if (typeof html !== "string") return "";
   return html.replace(/<\/?[^>]+(>|$)/g, "").trim();
 }
 
+// Utility: Extract salary information
 function extractSalary(baseSalary) {
   if (!baseSalary) return null;
 
@@ -191,13 +213,17 @@ function extractSalary(baseSalary) {
   return null;
 }
 
+// Utility: Parse JSON safely (NO eval!)
 function safeParseJSON(text) {
   try {
+    // Try to find JSON object in the response
     const jsonMatch = text.match(/\{[\s\S]*?\}/);
     if (!jsonMatch) return null;
 
+    // Use JSON.parse instead of eval for security
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Validate the structure
     if (typeof parsed === "object" && parsed !== null) {
       return {
         company: parsed.company || null,
